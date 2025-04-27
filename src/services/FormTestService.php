@@ -79,7 +79,6 @@ class FormTestService extends Component
         }
 
         try {
-            // Step 1: Fetch the form page
             $client = Craft::createGuzzleClient([
                 'allow_redirects' => true,
                 'cookies' => true,
@@ -88,22 +87,18 @@ class FormTestService extends Component
             $response = $client->request('GET', $formTest->formUrl);
             $html = (string)$response->getBody();
 
-            // Step 2: Parse form
             libxml_use_internal_errors(true);
             $dom = new \DOMDocument();
             $dom->loadHTML($html);
-
             $xpath = new \DOMXPath($dom);
             $form = $xpath->query('//form')->item(0);
 
             if (!$form) {
-                return ['success' => false, 'message' => 'No form found on page.'];
+                return ['success' => false, 'message' => 'No form element found on page.'];
             }
 
-            // Step 3: Collect fields
             $postData = [];
 
-            // All hidden inputs
             foreach ($xpath->query('.//input[@type="hidden"]', $form) as $input) {
                 $name = $input->getAttribute('name');
                 $value = $input->getAttribute('value');
@@ -112,7 +107,6 @@ class FormTestService extends Component
                 }
             }
 
-            // Normal inputs
             foreach ($xpath->query('.//input[not(@type="hidden")]', $form) as $input) {
                 $name = $input->getAttribute('name');
                 if ($name && array_key_exists($name, $formTest->testFields)) {
@@ -120,7 +114,6 @@ class FormTestService extends Component
                 }
             }
 
-            // Textareas
             foreach ($xpath->query('.//textarea', $form) as $textarea) {
                 $name = $textarea->getAttribute('name');
                 if ($name && array_key_exists($name, $formTest->testFields)) {
@@ -128,15 +121,6 @@ class FormTestService extends Component
                 }
             }
 
-            // Checkboxes
-            foreach ($xpath->query('.//input[@type="checkbox"]', $form) as $checkbox) {
-                $name = $checkbox->getAttribute('name');
-                if ($name && array_key_exists($name, $formTest->testFields)) {
-                    $postData[$name] = $formTest->testFields[$name];
-                }
-            }
-
-            // Step 4: Figure out where to POST
             $formAction = $form->getAttribute('action') ?: $formTest->formUrl;
             if (!str_starts_with($formAction, 'http')) {
                 $parsed = parse_url($formTest->formUrl);
@@ -145,7 +129,6 @@ class FormTestService extends Component
 
             $formMethod = strtoupper($form->getAttribute('method') ?: 'POST');
 
-            // Step 5: POST the form
             $submitResponse = $client->request($formMethod, $formAction, [
                 'form_params' => $postData,
                 'headers' => [
@@ -154,20 +137,29 @@ class FormTestService extends Component
             ]);
 
             $submitBody = (string)$submitResponse->getBody();
+            $statusCode = $submitResponse->getStatusCode();
 
-            // Step 6: Check for success
-            if (str_contains($submitBody, $formTest->expectedSuccessText)) {
-                return ['success' => true];
+            // --- CLEAN, GENERIC, CORRECT CHECKS ---
+
+            // 1. Status code must be 2xx
+            if ($statusCode < 200 || $statusCode >= 300) {
+                return ['success' => false, 'message' => "Form submission failed with HTTP status $statusCode."];
             }
 
-            return ['success' => false, 'message' => 'Success text not found after form submission.'];
+            // 2. If Expected Success Text is configured, it must be found
+            if (!empty($formTest->expectedSuccessText)) {
+                if (!str_contains($submitBody, $formTest->expectedSuccessText)) {
+                    return ['success' => false, 'message' => "Expected success text not found in response."];
+                }
+            }
+
+            // 3. If we have no Expected Success Text, just accept 2xx as success
+            return ['success' => true];
 
         } catch (\Throwable $e) {
             Craft::error('Error running form test: ' . $e->getMessage(), __METHOD__);
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }
-
-
 
 }
