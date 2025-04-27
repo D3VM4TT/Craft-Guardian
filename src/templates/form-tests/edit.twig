@@ -1,0 +1,47 @@
+{% extends '_layouts/cp' %}
+{% import '_includes/forms.twig' as forms %}
+
+{% set title = formTest ? 'Edit Form Test' : 'New Form Test' %}
+
+{% block content %}
+    <form method="post" accept-charset="UTF-8">
+        {{ csrfInput() }}
+        {{ actionInput('craft-guardian/form-tests/save') }}
+        {{ hiddenInput('id', formTest.id ?? '') }}
+
+        {{ forms.textField({
+            name: 'formName',
+            label: 'Form Name',
+            required: true,
+            value: formTest.formName ?? ''
+        }) }}
+
+        {{ forms.textField({
+            name: 'formUrl',
+            label: 'Form URL',
+            required: true,
+            value: formTest.formUrl ?? ''
+        }) }}
+
+        {{ forms.textField({
+            name: 'expectedSuccessText',
+            label: 'Expected Success Text',
+            required: true,
+            value: formTest.expectedSuccessText ?? ''
+        }) }}
+
+        {{ forms.textField({
+            name: 'testInterval',
+            label: 'Test Interval (days)',
+            value: formTest.testInterval ?? 30
+        }) }}
+
+        {{ forms.lightswitchField({
+            name: 'enabled',
+            label: 'Enabled',
+            on: formTest.enabled ?? true
+        }) }}
+
+        <input type="submit" class="btn submit" value="Save Form Test">
+    </form>
+{% endblock %}

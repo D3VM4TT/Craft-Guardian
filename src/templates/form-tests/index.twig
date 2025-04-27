@@ -1,0 +1,35 @@
+{% extends '_layouts/cp' %}
+{% set title = "Form Tests" %}
+
+{% block content %}
+    <div class="flex flex-nowrap justify-end mb-4">
+        <a href="{{ url('craft-guardian/form-tests/new') }}" class="btn submit">New Form Test</a>
+    </div>
+
+    {% if tests|length %}
+        <table class="data fullwidth">
+            <thead>
+            <tr>
+                <th>Form Name</th>
+                <th>Form URL</th>
+                <th>Status</th>
+                <th>Last Run</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for test in tests %}
+                <tr>
+                    <td>{{ test.formName }}</td>
+                    <td><a href="{{ test.formUrl }}" target="_blank">{{ test.formUrl }}</a></td>
+                    <td>{{ test.enabled ? 'Enabled' : 'Disabled' }}</td>
+                    <td>{{ test.lastRunAt ?? 'Never' }}</td>
+                    <td><a href="{{ url('craft-guardian/form-tests/' ~ test.id) }}">Edit</a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No form tests yet.</p>
+    {% endif %}
+{% endblock %}

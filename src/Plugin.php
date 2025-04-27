@@ -2,10 +2,15 @@
 
 namespace boost\craftguardian;
 
+use boost\craftguardian\services\FormTestService;
 use Craft;
 use boost\craftguardian\models\Settings;
 use craft\base\Model;
 use craft\base\Plugin as BasePlugin;
+use craft\events\RegisterUrlRulesEvent;
+use craft\web\UrlManager;
+use yii\base\Event;
+
 
 /**
  * Craft Guardian plugin
@@ -20,6 +25,9 @@ class Plugin extends BasePlugin
 {
     public string $schemaVersion = '1.0.0';
     public bool $hasCpSettings = true;
+    public bool $hasCpSection = true;
+    const string HANDLE = 'craft-guardian';
+
 
     public static function config(): array
     {
@@ -39,7 +47,10 @@ class Plugin extends BasePlugin
         // Any code that creates an element query or loads Twig should be deferred until
         // after Craft is fully initialized, to avoid conflicts with other plugins/modules
         Craft::$app->onInit(function() {
-            // ...
+            // REGISTER SERVICES
+            $this->setComponents([
+                'formTests' => FormTestService::class
+            ]);
         });
     }
 
@@ -50,7 +61,7 @@ class Plugin extends BasePlugin
 
     protected function settingsHtml(): ?string
     {
-        return Craft::$app->view->renderTemplate('craft-guardian/_settings.twig', [
+        return Craft::$app->view->renderTemplate(self::HANDLE . '/_settings.twig', [
             'plugin' => $this,
             'settings' => $this->getSettings(),
         ]);
@@ -58,7 +69,28 @@ class Plugin extends BasePlugin
 
     private function attachEventHandlers(): void
     {
-        // Register event handlers here ...
-        // (see https://craftcms.com/docs/5.x/extend/events.html to get started)
+        if (Craft::$app->getRequest()->getIsCpRequest()) {
+            Event::on(
+
+                UrlManager::class,
+                UrlManager::EVENT_REGISTER_CP_URL_RULES,
+                function (RegisterUrlRulesEvent $event) {
+                    $event->rules[self::HANDLE . '/form-tests/save'] = self::HANDLE . '/form-tests/save';
+                    $event->rules[self::HANDLE . '/form-tests'] = self::HANDLE . '/form-tests/index';
+                    $event->rules[self::HANDLE . '/form-tests/new'] = self::HANDLE . '/form-tests/edit';
+                    $event->rules[self::HANDLE . '/form-tests/<formTestId:\d+>'] = self::HANDLE . '/form-tests/edit';
+                }
+            );
+        }
+    }
+
+    public function getCpNavItem(): array
+    {
+        $navItem = parent::getCpNavItem();
+        $navItem['label'] = 'Craft Guardian';
+        $navItem['subnav'] = [
+            'form-tests' => ['label' => 'Form Tests', 'url' => self::HANDLE . '/form-tests'],
+        ];
+        return $navItem;
     }
 }
