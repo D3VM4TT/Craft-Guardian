@@ -2,85 +2,42 @@
 
 namespace boost\craftguardian\services;
 
+use boost\craftguardian\models\FormTest;
 use boost\craftguardian\records\FormTestRecord;
 use Craft;
 use craft\base\Component;
 
 class FormTestService extends Component
 {
-    public function fetchFormFields(string $url): array
+    public function getAllTests(): array
     {
-        $client = Craft::createGuzzleClient();
-        $response = $client->get($url);
-        $html = (string)$response->getBody();
+        $records = FormTestRecord::find()
+            ->orderBy(['dateCreated' => SORT_DESC])
+            ->all();
 
-        libxml_use_internal_errors(true);
-        $dom = new \DOMDocument();
-        $dom->loadHTML($html);
+        return array_map(function(FormTestRecord $record) {
+            return $this->createModelFromRecord($record);
+        }, $records);
+    }
 
-        $inputs = [];
-        foreach ($dom->getElementsByTagName('input') as $input) {
-            $type = $input->getAttribute('type') ?: 'text';
-            $name = $input->getAttribute('name');
-            if ($name && $type !== 'hidden') {
-                $inputs[] = [
-                    'name' => $name,
-                    'type' => $type,
-                    'defaultValue' => $this->getDefaultValueForType($type),
-                ];
-            }
+    public function getTestById(int $id): ?FormTest
+    {
+        $record = FormTestRecord::findOne($id);
+
+        if (!$record) {
+            return null;
         }
 
-        foreach ($dom->getElementsByTagName('textarea') as $textarea) {
-            $name = $textarea->getAttribute('name');
-            if ($name) {
-                $inputs[] = [
-                    'name' => $name,
-                    'type' => 'textarea',
-                    'defaultValue' => 'Test message',
-                ];
-            }
-        }
-
-        foreach ($dom->getElementsByTagName('select') as $select) {
-            $name = $select->getAttribute('name');
-            if ($name) {
-                $inputs[] = [
-                    'name' => $name,
-                    'type' => 'select',
-                    'defaultValue' => 'Option 1',
-                ];
-            }
-        }
-
-        return $inputs;
+        return $this->createModelFromRecord($record);
     }
 
-    private function getDefaultValueForType(string $type): string
-    {
-        return match ($type) {
-            'email' => 'test@example.com',
-            'tel' => '0123456789',
-            'url' => 'https://example.com',
-            'number' => '123',
-            default => 'Test Value',
-        };
-    }
-
-    public function getAllTests()
-    {
-        // To implement: fetch all form tests from DB
-        return [];
-    }
-
-    public function getTestById(int $id)
-    {
-        // To implement: fetch a single test from DB
-    }
-
-    public function saveFormTest(\boost\craftguardian\models\FormTest $formTest): bool
+    public function saveFormTest(FormTest $formTest): bool
     {
         $record = $formTest->id ? FormTestRecord::findOne($formTest->id) : new FormTestRecord();
+
+        if (!$record) {
+            $record = new FormTestRecord();
+        }
 
         $record->formName = $formTest->formName;
         $record->formUrl = $formTest->formUrl;
@@ -92,7 +49,24 @@ class FormTestService extends Component
         $record->testInterval = $formTest->testInterval;
         $record->enabled = $formTest->enabled;
 
-        return (bool)$record->save();
+        return (bool) $record->save();
     }
 
+    private function createModelFromRecord(FormTestRecord $record): FormTest
+    {
+        return new FormTest([
+            'id' => $record->id,
+            'formName' => $record->formName,
+            'formUrl' => $record->formUrl,
+            'submitUrl' => $record->submitUrl,
+            'method' => $record->method,
+            'expectedSuccessText' => $record->expectedSuccessText,
+            'testFields' => $record->testFields ?? [],
+            'sendEmailCheck' => (bool) $record->sendEmailCheck,
+            'testInterval' => (int) $record->testInterval,
+            'lastRunAt' => $record->lastRunAt,
+            'nextRunAt' => $record->nextRunAt,
+            'enabled' => (bool) $record->enabled,
+        ]);
+    }
 }

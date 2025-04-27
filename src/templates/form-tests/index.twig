@@ -1,5 +1,6 @@
 {% extends '_layouts/cp' %}
-{% set title = "Form Tests" %}
+{% import '_includes/forms.twig' as forms %}
+{% set title = 'Form Tests' %}
 
 {% block content %}
     <div class="flex flex-nowrap justify-end mb-4">
@@ -23,7 +24,7 @@
                     <td>{{ test.formName }}</td>
                     <td><a href="{{ test.formUrl }}" target="_blank">{{ test.formUrl }}</a></td>
                     <td>{{ test.enabled ? 'Enabled' : 'Disabled' }}</td>
-                    <td>{{ test.lastRunAt ?? 'Never' }}</td>
+                    <td>{{ test.lastRunAt ? test.lastRunAt|date('Y-m-d H:i') : 'Never' }}</td>
                     <td><a href="{{ url('craft-guardian/form-tests/' ~ test.id) }}">Edit</a></td>
                 </tr>
             {% endfor %}
