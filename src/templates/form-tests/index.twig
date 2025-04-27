@@ -26,6 +26,17 @@
                     <td>{{ test.enabled ? 'Enabled' : 'Disabled' }}</td>
                     <td>{{ test.lastRunAt ? test.lastRunAt|date('Y-m-d H:i') : 'Never' }}</td>
                     <td><a href="{{ url('craft-guardian/form-tests/' ~ test.id) }}">Edit</a></td>
+                    <td class="nowrap">
+                        <div class="flex flex-nowrap">
+                            <a href="{{ url('craft-guardian/form-tests/' ~ test.id) }}" class="btn small">Edit</a>
+
+                            <form method="post" action="{{ url('craft-guardian/form-tests/run-test') }}" accept-charset="UTF-8" style="margin-left: 8px;">
+                                {{ csrfInput() }}
+                                {{ hiddenInput('id', test.id) }}
+                                <button type="submit" class="btn small">Test Form</button>
+                            </form>
+                        </div>
+                    </td>
                 </tr>
             {% endfor %}
             </tbody>

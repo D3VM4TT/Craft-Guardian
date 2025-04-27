@@ -42,6 +42,15 @@
             on: formTest.enabled ?? true
         }) }}
 
+        {{ forms.textareaField({
+            name: 'testFieldsJson',
+            label: 'Test Fields (JSON)',
+            instructions: 'Map of form field names to values. Example: {"fields[emailAddress]":"test@example.com"}',
+            required: true,
+            value: formTest.testFields ? formTest.testFields|json_encode : ''
+        }) }}
+
+
         <input type="submit" class="btn submit" value="Save Form Test">
     </form>
 {% endblock %}

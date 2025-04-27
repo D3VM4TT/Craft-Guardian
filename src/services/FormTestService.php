@@ -69,4 +69,105 @@ class FormTestService extends Component
             'enabled' => (bool) $record->enabled,
         ]);
     }
+
+    public function runTestById(int $id): array
+    {
+        $formTest = $this->getTestById($id);
+
+        if (!$formTest) {
+            return ['success' => false, 'message' => 'Form Test not found.'];
+        }
+
+        try {
+            // Step 1: Fetch the form page
+            $client = Craft::createGuzzleClient([
+                'allow_redirects' => true,
+                'cookies' => true,
+            ]);
+
+            $response = $client->request('GET', $formTest->formUrl);
+            $html = (string)$response->getBody();
+
+            // Step 2: Parse form
+            libxml_use_internal_errors(true);
+            $dom = new \DOMDocument();
+            $dom->loadHTML($html);
+
+            $xpath = new \DOMXPath($dom);
+            $form = $xpath->query('//form')->item(0);
+
+            if (!$form) {
+                return ['success' => false, 'message' => 'No form found on page.'];
+            }
+
+            // Step 3: Collect fields
+            $postData = [];
+
+            // All hidden inputs
+            foreach ($xpath->query('.//input[@type="hidden"]', $form) as $input) {
+                $name = $input->getAttribute('name');
+                $value = $input->getAttribute('value');
+                if ($name) {
+                    $postData[$name] = $value;
+                }
+            }
+
+            // Normal inputs
+            foreach ($xpath->query('.//input[not(@type="hidden")]', $form) as $input) {
+                $name = $input->getAttribute('name');
+                if ($name && array_key_exists($name, $formTest->testFields)) {
+                    $postData[$name] = $formTest->testFields[$name];
+                }
+            }
+
+            // Textareas
+            foreach ($xpath->query('.//textarea', $form) as $textarea) {
+                $name = $textarea->getAttribute('name');
+                if ($name && array_key_exists($name, $formTest->testFields)) {
+                    $postData[$name] = $formTest->testFields[$name];
+                }
+            }
+
+            // Checkboxes
+            foreach ($xpath->query('.//input[@type="checkbox"]', $form) as $checkbox) {
+                $name = $checkbox->getAttribute('name');
+                if ($name && array_key_exists($name, $formTest->testFields)) {
+                    $postData[$name] = $formTest->testFields[$name];
+                }
+            }
+
+            // Step 4: Figure out where to POST
+            $formAction = $form->getAttribute('action') ?: $formTest->formUrl;
+            if (!str_starts_with($formAction, 'http')) {
+                $parsed = parse_url($formTest->formUrl);
+                $formAction = $parsed['scheme'] . '://' . $parsed['host'] . '/' . ltrim($formAction, '/');
+            }
+
+            $formMethod = strtoupper($form->getAttribute('method') ?: 'POST');
+
+            // Step 5: POST the form
+            $submitResponse = $client->request($formMethod, $formAction, [
+                'form_params' => $postData,
+                'headers' => [
+                    'Content-Type' => 'application/x-www-form-urlencoded',
+                ],
+            ]);
+
+            $submitBody = (string)$submitResponse->getBody();
+
+            // Step 6: Check for success
+            if (str_contains($submitBody, $formTest->expectedSuccessText)) {
+                return ['success' => true];
+            }
+
+            return ['success' => false, 'message' => 'Success text not found after form submission.'];
+
+        } catch (\Throwable $e) {
+            Craft::error('Error running form test: ' . $e->getMessage(), __METHOD__);
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+
+
 }

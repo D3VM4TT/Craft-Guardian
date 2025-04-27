@@ -36,7 +36,7 @@ class FormTestsController extends Controller
             'formName' => $request->getBodyParam('formName'),
             'formUrl' => $request->getBodyParam('formUrl'),
             'expectedSuccessText' => $request->getBodyParam('expectedSuccessText'),
-            'testFields' => $request->getBodyParam('testFields', []),
+            'testFields' => json_decode($request->getBodyParam('testFieldsJson'), true) ?? [],
             'sendEmailCheck' => (bool)$request->getBodyParam('sendEmailCheck'),
             'testInterval' => (int)$request->getBodyParam('testInterval'),
             'enabled' => (bool)$request->getBodyParam('enabled'),
@@ -54,5 +54,23 @@ class FormTestsController extends Controller
 
         return $this->redirectToPostedUrl();
     }
+
+    public function actionRunTest(): \yii\web\Response
+    {
+        $this->requirePostRequest();
+        $request = Craft::$app->getRequest();
+        $formTestId = $request->getRequiredBodyParam('id');
+
+        $result = Plugin::getInstance()->formTests->runTestById($formTestId);
+
+        if ($result['success']) {
+            Craft::$app->getSession()->setNotice('Form test ran successfully.');
+        } else {
+            Craft::$app->getSession()->setError('Form test failed: ' . $result['message']);
+        }
+
+        return $this->redirect('craft-guardian/form-tests');
+    }
+
 
 }
