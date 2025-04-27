@@ -75,11 +75,12 @@ class Plugin extends BasePlugin
                 UrlManager::class,
                 UrlManager::EVENT_REGISTER_CP_URL_RULES,
                 function (RegisterUrlRulesEvent $event) {
+
+                    $event->rules[self::HANDLE . '/form-tests/new'] = self::HANDLE . '/form-tests/create';
+                    $event->rules[self::HANDLE . '/form-tests/<formTestId:\d+>'] = self::HANDLE . '/form-tests/edit';
                     $event->rules[self::HANDLE . '/form-tests/save'] = self::HANDLE . '/form-tests/save';
                     $event->rules[self::HANDLE . '/form-tests/run-test'] = self::HANDLE . '/form-tests/run-test';
                     $event->rules[self::HANDLE . '/form-tests'] = self::HANDLE . '/form-tests/index';
-                    $event->rules[self::HANDLE . '/form-tests/new'] = self::HANDLE . '/form-tests/edit';
-                    $event->rules[self::HANDLE . '/form-tests/<formTestId:\d+>'] = self::HANDLE . '/form-tests/edit';
                 }
             );
         }

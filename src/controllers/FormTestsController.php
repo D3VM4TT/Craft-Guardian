@@ -18,13 +18,28 @@ class FormTestsController extends Controller
         ]);
     }
 
-    public function actionEdit(int $formTestId = null): \yii\web\Response
+    public function actionCreate(): \yii\web\Response
     {
-        $formTest = $formTestId ? Plugin::getInstance()->formTests->getTestById($formTestId) : null;
-        return $this->renderTemplate(Plugin::HANDLE . '/form-tests/edit', [
+        $formTest = new \boost\craftguardian\models\FormTest();
+
+        return $this->renderTemplate('craft-guardian/form-tests/edit', [
             'formTest' => $formTest,
         ]);
     }
+
+    public function actionEdit(int $formTestId): \yii\web\Response
+    {
+        $formTest = Plugin::getInstance()->formTests->getTestById($formTestId);
+
+        if (!$formTest) {
+            throw new \yii\web\NotFoundHttpException('Form Test not found.');
+        }
+
+        return $this->renderTemplate('craft-guardian/form-tests/edit', [
+            'formTest' => $formTest,
+        ]);
+    }
+
 
     public function actionSave(): \yii\web\Response
     {
