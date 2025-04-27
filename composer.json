@@ -1,0 +1,47 @@
+{
+  "name": "boost/craft-guardian",
+  "description": "Maintenance and quality assurance plugin for Craft CMS that automatically tests forms, detects dead links, and ensures every page meets key structural standards",
+  "type": "craft-plugin",
+  "license": "proprietary",
+  "support": {
+    "email": "matthewdejager5@gmail.com",
+    "issues": "https://github.com/d3vm4tt/craft-guardian/issues?state=open",
+    "source": "https://github.com/d3vm4tt/craft-guardian",
+    "docs": "https://github.com/d3vm4tt/craft-guardian",
+    "rss": "https://github.com/d3vm4tt/craft-guardian/releases.atom"
+  },
+  "require": {
+    "php": ">=8.2",
+    "craftcms/cms": "^5.0.0"
+  },
+  "require-dev": {
+    "craftcms/ecs": "dev-main",
+    "craftcms/phpstan": "dev-main"
+  },
+  "autoload": {
+    "psr-4": {
+      "boost\\craftguardian\\": "src/"
+    }
+  },
+  "extra": {
+    "handle": "craft-guardian",
+    "name": "Craft Guardian",
+    "developer": "Matthew De Jager",
+    "documentationUrl": "https://github.com/d3vm4tt/craft-guardian"
+  },
+  "scripts": {
+    "check-cs": "ecs check --ansi",
+    "fix-cs": "ecs check --ansi --fix",
+    "phpstan": "phpstan --memory-limit=1G"
+  },
+  "config": {
+    "sort-packages": true,
+    "platform": {
+      "php": "8.2"
+    },
+    "allow-plugins": {
+      "yiisoft/yii2-composer": true,
+      "craftcms/plugin-installer": true
+    }
+  }
+}
