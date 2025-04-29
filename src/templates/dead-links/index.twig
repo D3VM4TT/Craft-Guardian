@@ -1,0 +1,48 @@
+{% extends '_layouts/cp' %}
+{% set title = 'Dead Link Checker' %}
+
+{% block content %}
+
+    <form method="post" action="{{ cpUrl('craft-guardian/dead-links/scan') }}">
+        {{ csrfInput() }}
+        <button class="btn submit">Scan for Dead Links</button>
+    </form>
+
+    <h2 class="mb-4">Scan Results</h2>
+
+    {% if results|length %}
+        <table class="data fullwidth">
+            <thead>
+            <tr>
+                <th>Entry</th>
+                <th>Field</th>
+                <th>URL</th>
+                <th>Status</th>
+                <th>Error</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for result in results %}
+                <tr>
+                    <td>
+                        <a href="{{ result.entry.cpEditUrl }}">
+                            {{ result.entry.title }}
+                        </a>
+                    </td>
+                    <td>{{ result.field }}</td>
+                    <td><a href="{{ result.url }}" target="_blank">{{ result.url }}</a></td>
+                    <td>{{ result.status ?? '—' }}</td>
+                    <td>{{ result.error ?? '—' }}</td>
+                    <td>
+                        <a href="{{ result.entry.cpEditUrl }}" class="btn small">Edit</a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No broken links detected.</p>
+    {% endif %}
+
+{% endblock %}

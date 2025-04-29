@@ -49,7 +49,8 @@ class Plugin extends BasePlugin
         Craft::$app->onInit(function() {
             // REGISTER SERVICES
             $this->setComponents([
-                'formTests' => FormTestService::class
+                'formTests' => FormTestService::class,
+                 'deadLinks' => \boost\craftguardian\services\DeadLinkCheckerService::class
             ]);
         });
     }
@@ -81,6 +82,10 @@ class Plugin extends BasePlugin
                     $event->rules[self::HANDLE . '/form-tests/save'] = self::HANDLE . '/form-tests/save';
                     $event->rules[self::HANDLE . '/form-tests/run-test'] = self::HANDLE . '/form-tests/run-test';
                     $event->rules[self::HANDLE . '/form-tests'] = self::HANDLE . '/form-tests/index';
+
+                    $event->rules[self::HANDLE . '/dead-links'] = self::HANDLE . '/dead-links/index';
+                    $event->rules[self::HANDLE . '/dead-links/scan'] = self::HANDLE . '/dead-links/scan';
+
                 }
             );
         }
@@ -92,7 +97,9 @@ class Plugin extends BasePlugin
         $navItem['label'] = 'Craft Guardian';
         $navItem['subnav'] = [
             'form-tests' => ['label' => 'Form Tests', 'url' => self::HANDLE . '/form-tests'],
+            'dead-links' => ['label' => 'Dead Links', 'url' => self::HANDLE . '/dead-links'],
         ];
+
         return $navItem;
     }
 }
