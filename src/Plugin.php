@@ -50,7 +50,8 @@ class Plugin extends BasePlugin
             // REGISTER SERVICES
             $this->setComponents([
                 'formTests' => FormTestService::class,
-                 'deadLinks' => \boost\craftguardian\services\DeadLinkCheckerService::class
+                 'deadLinks' => \boost\craftguardian\services\DeadLinkCheckerService::class,
+                'headingChecker' => \boost\craftguardian\services\HeadingCheckerService::class,
             ]);
         });
     }
@@ -86,6 +87,9 @@ class Plugin extends BasePlugin
                     $event->rules[self::HANDLE . '/dead-links'] = self::HANDLE . '/dead-links/index';
                     $event->rules[self::HANDLE . '/dead-links/scan'] = self::HANDLE . '/dead-links/scan';
 
+                    $event->rules[self::HANDLE . '/heading-checker'] = self::HANDLE . '/heading-checker/index';
+                    $event->rules[self::HANDLE . '/heading-checker/scan'] = self::HANDLE . '/heading-checker/scan';
+
                 }
             );
         }
@@ -98,7 +102,9 @@ class Plugin extends BasePlugin
         $navItem['subnav'] = [
             'form-tests' => ['label' => 'Form Tests', 'url' => self::HANDLE . '/form-tests'],
             'dead-links' => ['label' => 'Dead Links', 'url' => self::HANDLE . '/dead-links'],
+            'heading-checker' => ['label' => 'Heading Checker', 'url' => self::HANDLE . '/heading-checker'],
         ];
+
 
         return $navItem;
     }
